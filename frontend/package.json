@@ -1,0 +1,11 @@
+{
+  "name": "lru-cache-frontend",
+  "version": "1.0.0",
+  "description": "Static server for Bounded LRU Cache Frontend",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "author": "Antigravity",
+  "license": "MIT"
+}
