@@ -1,133 +1,348 @@
-# Bounded LRU Cache: Hackathon Showcase Dashboard
+# 🚀 Bounded LRU Cache – Performance Showcase Dashboard
 
-A generic, thread-safe, bounded **Least Recently Used (LRU) Cache** backend written in Java 21, coupled with an interactive web dashboard frontend styled with **Tailwind CSS v4** and Vanilla JavaScript.
+A **generic, thread-safe, bounded Least Recently Used (LRU) Cache** implemented in **Java 21**, paired with a modern web dashboard built using **HTML, Tailwind CSS v4, and Vanilla JavaScript**.
 
-This project is built to demonstrate the massive performance benefits of caching computationally-heavy operations, complete with live visual pipelines, statistics tracking, and concurrency safety.
-
----
-
-## 🚀 Port Allocations
-*   **Web Frontend**: Port `5999` (`http://localhost:5999`)
-*   **Java REST Backend**: Port `6000` (`http://localhost:6000`)
+This project demonstrates how caching significantly improves application performance by eliminating redundant computations. It provides real-time cache visualization, performance metrics, LRU eviction tracking, and concurrency support through an interactive dashboard.
 
 ---
 
-## 📁 Directory Structure
+# ✨ Features
 
-The project is split cleanly into `/backend` and `/frontend` directories:
+### Backend
+
+* Generic LRU Cache implementation using `LinkedHashMap`
+* Access-order based eviction
+* Configurable cache capacity
+* Automatic LRU eviction
+* Thread-safe implementation using `ReentrantReadWriteLock`
+* Performance benchmarking
+* Cache hit and miss statistics
+* Eviction tracking
+* Simulated expensive computations
+* Structured logging
+* Automated unit tests
+* Multi-threaded stress testing
+
+### Frontend
+
+* Modern responsive dashboard
+* Live cache visualization (LRU → MRU)
+* Performance statistics
+* Cache Hit / Miss indicators
+* Activity log
+* Performance comparison
+* Future enhancement showcase
+* Real-world application showcase
+
+---
+
+# 🛠️ Technology Stack
+
+## Backend
+
+* Java 21
+* Maven
+* LinkedHashMap
+* JUnit 5
+
+## Frontend
+
+* HTML5
+* Tailwind CSS v4
+* Vanilla JavaScript
+* Fetch API
+* Node.js (Static Server)
+
+---
+
+# 📁 Project Structure
 
 ```text
 LRUCache/
-├── README.md                                    # Project instructions and documentation
-├── backend/                                     # Complete Java Backend codebase
-│   ├── pom.xml                                  # Maven project configuration (Java 21, JUnit 5)
+
+├── backend/
+│   ├── pom.xml
 │   └── src/
 │       ├── main/java/com/lrucache/
-│       │   ├── Main.java                        # Single-Threaded demonstration CLI
-│       │   ├── StressTestDemo.java              # Multi-Threaded stress test CLI
-│       │   ├── cache/                           # LRUCache, CacheEntry, CacheManager, EvictionListener
-│       │   ├── concurrency/                     # ThreadSafeCache decorator (ReentrantReadWriteLock)
-│       │   ├── exception/                       # Custom Cache exceptions
-│       │   ├── service/                         # ComputationService interfaces and square services
-│       │   ├── statistics/                      # CacheStatistics tracking hit/miss averages
-│       │   └── util/                            # TimeUtil helper class
+│       │   ├── Main.java
+│       │   ├── StressTestDemo.java
+│       │   ├── cache/
+│       │   ├── concurrency/
+│       │   ├── exception/
+│       │   ├── service/
+│       │   ├── statistics/
+│       │   └── util/
 │       └── test/java/com/lrucache/
-│           ├── cache/                           # LRUCacheTest functional checks
-│           └── concurrency/                     # ThreadSafeCacheTest concurrency checks
 │
-└── frontend/                                    # Modern Frontend Web Dashboard
-    ├── index.html                               # HTML5 layout using Tailwind CSS v4 Play CDN
-    ├── api.js                                   # REST Fetch API interfaces & Client-side LRU Simulator
-    ├── app.js                                   # Vanilla JS UI rendering and event loops
-    ├── server.js                                # Dependency-free static node server (Port 5999)
-    └── package.json                             # Start configuration (npm start runs server.js)
+└── frontend/
+    ├── index.html
+    ├── app.js
+    ├── api.js
+    ├── server.js
+    └── package.json
 ```
 
 ---
 
-## 🛠️ Installation & Execution
+# 🌐 Default Ports
 
-### 1. Running the Web Frontend (Port 5999)
-The frontend contains a dependency-free Node.js static web server. To start the dashboard:
-
-1. Open your terminal and navigate to the `frontend/` directory:
-   ```bash
-   cd frontend
-   ```
-2. Start the local server:
-   ```bash
-   npm start
-   ```
-3. Open your browser and navigate to:
-   ```text
-   http://localhost:5999
-   ```
-
-*Note: By default, the dashboard boots in **Demo Mode (Local Cache)**, enabling you to test hits, misses, evictions, and activity logs immediately in the browser without having to start the Java server.*
+| Service          | Port     |
+| ---------------- | -------- |
+| Frontend         | **5999** |
+| Backend REST API | **6000** |
 
 ---
 
-### 2. Running the Java Backend (Port 6000)
-The backend is a Maven-based project compiling on **Java 21**.
+# ▶️ Running the Project
 
-1. Navigate to the `backend/` directory:
-   ```bash
-   cd backend
-   ```
+## 1. Start the Frontend
 
-2. **Run Single-Threaded CLI Demo**:
-   Runs the structured sequence producing cache misses, cache hits, eviction limits, and performance summaries:
-   ```bash
-   mvn exec:java
-   ```
+```bash
+cd frontend
+npm install
+npm start
+```
 
-3. **Run Concurrency Stress Test**:
-   Launches 10 threads executing 20,000 requests concurrently to verify thread safety:
-   ```bash
-   # Build the classes first
-   mvn compile
-   # Execute StressTestDemo
-   java -cp target/classes com.lrucache.StressTestDemo
-   ```
+Open:
 
-4. **Run Automated Unit Tests**:
-   Runs 9 automated unit tests verifying capacity constraints, LRU evictions, and parallel read/write locks:
-   ```bash
-   mvn test
-   ```
+```
+http://localhost:5999
+```
+
+The frontend starts in **Demo Mode**, allowing the dashboard to function even without the backend.
 
 ---
 
-## 🧠 Architectural Highlights
+## 2. Start the Backend
 
-### The Concurrency Strategy
-In an access-ordered `LinkedHashMap`, a read operation (`get()`) is structurally a write operation because it modifies the internal doubly-linked list to move the accessed node to the tail.
-*   `ThreadSafeCache` resolves this by wrapping operations in a fair `ReentrantReadWriteLock`.
-*   An exclusive **Write Lock** is acquired on `get()`, `put()`, and `clear()`.
-*   A **Read Lock** is acquired on `containsKey()`, `size()`, and `capacity()`, allowing multiple threads to query checks concurrently without structural link corruption.
+```bash
+cd backend
+mvn clean install
+mvn exec:java
+```
 
-### Dual-Mode Frontend Web Architecture
-*   **Demo Mode (Local Cache)**: Implements a complete LRU Cache simulation in Vanilla JS (`api.js`) utilizing JavaScript's `Map` insertion order. Toggling this mode lets you demonstrate the application immediately on any machine with zero network dependencies.
-*   **Live Connection**: Integrates with the backend REST endpoints on **Port 6000** via Fetch API.
+The backend will start on:
+
+```
+http://localhost:6000
+```
 
 ---
 
-## 🎯 How to Demonstrate during a Hackathon
+## 3. Run the Stress Test
 
-1.  **Open http://localhost:5999** with the dashboard in **Demo Mode (Local Cache)**.
-2.  **Demonstrate Cache MISS**:
-    *   Input `25` and click **Compute**.
-    *   Observe a 1-second delay (simulating heavy database/network lookup).
-    *   The Result Card will highlight a **Cache MISS** in orange, and the visual visualizer adds the card `25 -> 625` on the right (MRU).
-3.  **Demonstrate Cache HIT**:
-    *   Input `25` again and click **Compute**.
-    *   The result returns **instantly (0ms)**.
-    *   The Result Card highlights **Cache HIT** in green.
-4.  **Demonstrate LRU Eviction**:
-    *   Populate the cache with inputs `10`, `20`, `30`, `40` (exceeding capacity 5).
-    *   Notice `25` is pushed left towards the **LRU** end.
-    *   Access `25` again; watch it jump dynamically to the **MRU** end.
-    *   Input a new value like `60`. The eldest item at the LRU end will be evicted.
-    *   An eviction log alert (`[Evict] Key = ...`) is printed instantly in red in the **Activity Log**.
-5.  **Show Performance Stats**:
-    *   Highlight the **Performance Statistics** cards, pointing out the hit ratios and estimated time saved by avoiding redundant computation.
+```bash
+mvn compile
+
+java -cp target/classes com.lrucache.StressTestDemo
+```
+
+This launches concurrent requests to validate thread safety and cache consistency.
+
+---
+
+## 4. Run Unit Tests
+
+```bash
+mvn test
+```
+
+The tests verify:
+
+* LRU ordering
+* Capacity enforcement
+* Cache eviction
+* Thread safety
+* Statistics correctness
+
+---
+
+# 🏗️ Architecture
+
+## Backend
+
+The backend follows a modular architecture with clear separation of responsibilities.
+
+```
+Client Request
+        │
+        ▼
+Computation Service
+        │
+        ▼
+ Thread-Safe Cache
+        │
+        ▼
+LinkedHashMap (Access Order)
+        │
+        ▼
+Statistics Engine
+```
+
+The cache uses Java's `LinkedHashMap` in **access-order mode**, enabling efficient O(1) average-time cache operations while automatically maintaining LRU ordering.
+
+---
+
+# 🔒 Thread Safety
+
+Since accessing an entry in an access-ordered `LinkedHashMap` modifies its internal ordering, even a `get()` operation performs a structural update.
+
+To ensure correctness under concurrent access, the cache is protected using a **fair ReentrantReadWriteLock**.
+
+* **Write Lock**
+
+  * `get()`
+  * `put()`
+  * `clear()`
+
+* **Read Lock**
+
+  * `containsKey()`
+  * `size()`
+  * `capacity()`
+
+This prevents race conditions while allowing safe concurrent read operations where appropriate.
+
+---
+
+# 📊 Dashboard Highlights
+
+The frontend provides:
+
+* Live cache visualization
+* Cache Hit / Miss indicators
+* Execution time tracking
+* LRU → MRU visualization
+* Performance statistics
+* Activity log
+* Future enhancement roadmap
+* Real-world applications
+
+---
+
+# 🎯 Hackathon Demonstration Flow
+
+### Step 1
+
+Start the frontend and backend.
+
+Open:
+
+```
+http://localhost:5999
+```
+
+---
+
+### Step 2
+
+Enter:
+
+```
+25
+```
+
+Click **Compute**.
+
+The first request performs an expensive computation.
+
+Result:
+
+* Cache MISS
+* ~1 second execution time
+
+---
+
+### Step 3
+
+Enter:
+
+```
+25
+```
+
+again.
+
+Result:
+
+* Cache HIT
+* Instant response
+
+This demonstrates the performance improvement achieved through caching.
+
+---
+
+### Step 4
+
+Continue adding unique values until the cache reaches capacity.
+
+Observe:
+
+* Automatic LRU eviction
+* Cache ordering updates
+* Activity log notifications
+
+---
+
+### Step 5
+
+Review the dashboard statistics.
+
+Observe:
+
+* Hit Ratio
+* Miss Ratio
+* Total Requests
+* Evictions
+* Estimated Time Saved
+
+---
+
+# 🌍 Real-World Applications
+
+This caching mechanism can be integrated into:
+
+* AI inference systems
+* Database query optimization
+* Weather services
+* Stock market platforms
+* Recommendation engines
+* Web browsers
+* E-commerce applications
+* Banking systems
+* Backend microservices
+
+---
+
+# 🚀 Future Enhancements
+
+Potential extensions include:
+
+* Redis integration
+* Distributed caching
+* Cache expiration (TTL)
+* Multiple eviction policies (LRU, LFU, FIFO)
+* Persistent cache storage
+* Cloud deployment
+* REST authentication
+* Analytics dashboard
+* Microservice integration
+
+---
+
+# 📈 Why LRU?
+
+LRU is one of the most widely adopted cache replacement strategies because it assumes that recently accessed data is more likely to be requested again.
+
+It provides:
+
+* Efficient memory utilization
+* Automatic eviction of stale entries
+* O(1) average lookup and insertion
+* Excellent performance for workloads exhibiting temporal locality
+
+---
+
+# 👥 Team
+
+**Team Name:** *Exception Handlers*
