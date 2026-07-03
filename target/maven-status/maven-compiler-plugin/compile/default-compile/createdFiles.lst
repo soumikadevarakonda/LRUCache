@@ -9,6 +9,7 @@ com\lrucache\cache\LRUCache.class
 com\lrucache\exception\NullValueException.class
 com\lrucache\cache\EvictionListener.class
 com\lrucache\cache\LRUCache$1.class
+com\lrucache\StressTestDemo.class
 com\lrucache\service\ComputationService.class
 com\lrucache\exception\InvalidCapacityException.class
 com\lrucache\exception\CacheException.class

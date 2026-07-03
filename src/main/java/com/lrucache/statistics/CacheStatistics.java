@@ -4,13 +4,15 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.LongSupplier;
 
 /**
- * Thread-safe class tracking Cache statistics.
+ * Thread-safe class tracking Cache statistics and performance metrics.
  */
 public class CacheStatistics {
     private final AtomicLong hits = new AtomicLong(0);
     private final AtomicLong misses = new AtomicLong(0);
     private final AtomicLong totalLookupTimeNanos = new AtomicLong(0);
     private final AtomicLong totalComputationTimeNanos = new AtomicLong(0);
+    private final AtomicLong totalHitTimeNanos = new AtomicLong(0);
+    private final AtomicLong totalMissTimeNanos = new AtomicLong(0);
 
     private final int capacity;
     private final LongSupplier currentSizeSupplier;
@@ -36,32 +38,27 @@ public class CacheStatistics {
     }
 
     /**
-     * Records a cache hit, adding to hits and total lookup duration.
+     * Records a cache hit, adding to hits, total lookup duration, and total hit time.
      *
      * @param lookupTimeNanos time taken for the lookup in nanoseconds
      */
     public void recordHit(long lookupTimeNanos) {
         hits.incrementAndGet();
         totalLookupTimeNanos.addAndGet(lookupTimeNanos);
+        totalHitTimeNanos.addAndGet(lookupTimeNanos);
     }
 
     /**
-     * Records a cache miss, adding to misses and total lookup duration.
+     * Records a cache miss, adding to misses, total lookup, computation, and total miss time.
      *
-     * @param lookupTimeNanos time taken for the lookup in nanoseconds
-     */
-    public void recordMiss(long lookupTimeNanos) {
-        misses.incrementAndGet();
-        totalLookupTimeNanos.addAndGet(lookupTimeNanos);
-    }
-
-    /**
-     * Records computation duration.
-     *
+     * @param lookupTimeNanos      time taken for the initial lookup in nanoseconds
      * @param computationTimeNanos time taken for computation in nanoseconds
      */
-    public void recordComputation(long computationTimeNanos) {
+    public void recordMiss(long lookupTimeNanos, long computationTimeNanos) {
+        misses.incrementAndGet();
+        totalLookupTimeNanos.addAndGet(lookupTimeNanos);
         totalComputationTimeNanos.addAndGet(computationTimeNanos);
+        totalMissTimeNanos.addAndGet(lookupTimeNanos + computationTimeNanos);
     }
 
     public long getHits() {
@@ -108,13 +105,48 @@ public class CacheStatistics {
         return missCount == 0 ? 0.0 : (double) totalComputationTimeNanos.get() / missCount / 1_000_000.0;
     }
 
+    public double getAverageHitTimeMillis() {
+        long hitCount = hits.get();
+        return hitCount == 0 ? 0.0 : (double) totalHitTimeNanos.get() / hitCount / 1_000_000.0;
+    }
+
+    public double getAverageMissTimeMillis() {
+        long missCount = misses.get();
+        return missCount == 0 ? 0.0 : (double) totalMissTimeNanos.get() / missCount / 1_000_000.0;
+    }
+
+    public double getTotalExecutionTimeMillis() {
+        return (double) (totalHitTimeNanos.get() + totalMissTimeNanos.get()) / 1_000_000.0;
+    }
+
+    public double getEstimatedTimeSavedMillis() {
+        double avgMiss = getAverageMissTimeMillis();
+        double avgHit = getAverageHitTimeMillis();
+        long hitCount = hits.get();
+        return Math.max(0.0, (avgMiss - avgHit) * hitCount);
+    }
+
+    public double getPerformanceImprovementPercentage() {
+        double avgMiss = getAverageMissTimeMillis();
+        double avgHit = getAverageHitTimeMillis();
+        if (avgMiss == 0.0) return 0.0;
+        return ((avgMiss - avgHit) / avgMiss) * 100.0;
+    }
+
+    public double getSpeedupFactor() {
+        double avgMiss = getAverageMissTimeMillis();
+        double avgHit = getAverageHitTimeMillis();
+        if (avgHit == 0.0) return avgMiss > 0 ? Double.POSITIVE_INFINITY : 1.0;
+        return avgMiss / avgHit;
+    }
+
     @Override
     public String toString() {
         long total = getTotalRequests();
         return String.format(
-            "=========================================\n" +
-            "            CACHE STATISTICS             \n" +
-            "=========================================\n" +
+            "==================================================\n" +
+            "                CACHE STATISTICS                  \n" +
+            "==================================================\n" +
             "  Maximum Capacity         : %d\n" +
             "  Current Cache Size       : %d\n" +
             "  Total Requests           : %d\n" +
@@ -123,9 +155,14 @@ public class CacheStatistics {
             "  Hit Ratio                : %.2f%%\n" +
             "  Miss Ratio               : %.2f%%\n" +
             "  Number of Evictions      : %d\n" +
-            "  Average Lookup Time      : %.4f ms\n" +
+            "  Average Cache Lookup Time: %.4f ms\n" +
             "  Average Computation Time : %.2f ms\n" +
-            "=========================================",
+            "  Average Hit Time         : %.4f ms\n" +
+            "  Average Miss Time        : %.2f ms\n" +
+            "  Total Execution Time     : %.2f ms\n" +
+            "  Estimated Time Saved     : %.2f ms\n" +
+            "  Performance Improvement  : %.2f%% (%.1fx speedup)\n" +
+            "==================================================",
             capacity,
             getCurrentSize(),
             total,
@@ -135,7 +172,13 @@ public class CacheStatistics {
             getMissRatio() * 100,
             getEvictionCount(),
             getAverageLookupTimeMillis(),
-            getAverageComputationTimeMillis()
+            getAverageComputationTimeMillis(),
+            getAverageHitTimeMillis(),
+            getAverageMissTimeMillis(),
+            getTotalExecutionTimeMillis(),
+            getEstimatedTimeSavedMillis(),
+            getPerformanceImprovementPercentage(),
+            getSpeedupFactor()
         );
     }
 }
